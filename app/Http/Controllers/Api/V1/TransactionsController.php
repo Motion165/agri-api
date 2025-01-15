@@ -5,17 +5,22 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Transaction;  // Note: singular 'Transaction', not 'Transactions'
+use App\Filters\V1\TransactionFilter;
+use App\Http\Resources\V1\TransactionCollection;
 
 class TransactionsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $transactions = Transaction::with('farmer')->get();  // Use 'Transaction' instead of 'Transactions'
-        
-        return response()->json([
-            'success' => true,
-            'data' => $transactions
-        ]);
+        $filter = new TransactionFilter();
+        $queryItems = $filter->transform($request); // [['column', 'operator', 'value']]
+
+        if (count($queryItems) == 0) {
+            return new TransactionCollection(Transaction::paginate());
+        } else {
+            $transactions = Transaction::where($queryItems)->paginate();
+            return new TransactionCollection($transactions->appends($request->query()));
+        }
     }
 
     public function store(Request $request)
