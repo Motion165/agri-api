@@ -30,6 +30,7 @@ class ApiFilter {
             }
         }
 
+        
         return $eloQuery;
     }
 }
